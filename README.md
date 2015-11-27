@@ -1,6 +1,6 @@
 # EIRP
 Total radiated power in reverberation chamber, automation scripts in Python.
-![](./img/CA.jpg )
+![](./img/RC.jpg )
 Calibration and measurement with R&S signal generator, R&S spectrum analyser and a reverberation chamber.
 
 
@@ -13,4 +13,4 @@ Needed:
 
 
 
-`Calibration.py` performs the calibration of the chamber and renders the radiation pattern.
+`Calibration.py` performs the calibration of the reverberation chamber.
