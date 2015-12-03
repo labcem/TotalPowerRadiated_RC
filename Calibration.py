@@ -30,9 +30,8 @@ Nf=1001 #number of frequencies
 f=linspace(f0,f1,Nf) #list of frequencies
 fcenter=0.5*(f0+f1)   #center frequency
 fspan=f1-f0   #span
-RBW=100e3       #RBW width
-VBW=100e3       #VBW width
-SWP=15          #sweep time
+RBW=1000e3       #RBW width
+VBW=1000e3       #VBW width
 SwpPt=Nf        #number of points
 
 #Stirrer######################################
@@ -67,7 +66,7 @@ spectrum=FSV30()
 spectrum.reset()
 spectrum.SweepPoint(SwpPt)   #Réglage du nombre de pts
 spectrum.UnitDBM()            #Réglage en de l'unité en dBm
-spectrum.centerFreq(fcenter)
+spectrum.centerFreq(int(fcenter))
 spectrum.SPAN(fspan)
 spectrum.RBW(RBW)
 
@@ -88,7 +87,7 @@ for i in range(0,len(Angles)): #loop over the stirrer positions
     gene.on()
     for j in range(0,len(f)): #loop over the frequencies
         gene.setFreq(f[j])
-        gene.setPower(P0-pertecable)
+        gene.setPower(P0-cablelosses)
         time.sleep(0.02)
         Level = spectrum.getTrace(SwpPt)
         max(Level)           #
@@ -96,7 +95,7 @@ for i in range(0,len(Angles)): #loop over the stirrer positions
         PowMeas[i,j]=max(Level)
         Measurement=vstack((Measurement,array([Angles[i],f[j],PowIn[i,j],PowMeas[i,j]])))
         print 'N = %3d, f = %2.2f MHz, Pin = %2.2f dBm, Pmeas= %2.2f dBm' %(i+1,f[j]/1e6,P0,PowMeas[i,j])
-    gene.arret()
+    gene.off()
 
 V=54.5 #volume of the chamber in m^3
 PowMeasAvg=(10**(PowMeas/10)/1000).mean(axis=0) #average measured power over the stirrer positions
@@ -113,7 +112,6 @@ plot(Q[:,0],Q[:,1])
 xlabel('f en Hz')
 ylabel('Q')
 grid('on')
-show()
 savefig('Qcal.pdf',bbox_inches="tight")
-savefig('Qcal.png',bbox_inches="tight")
+#savefig('Qcal.png',bbox_inches="tight")
 close()

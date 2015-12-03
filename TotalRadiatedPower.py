@@ -35,22 +35,19 @@ V=54.5 #volume of the chamber
 f=Qcal[:,0] #loaded from the calibration file
 Nf=len(f) #number of frequency
 f0=f[0]
-f1=f[Nf]
+f1=f[-1:]
 
 #Brasseur######################################
 N=50 # number of stirrer positions
 Angles=linspace(360/N,360,N) # list of stirrer angular positions
 
-#DSpectrum analyser parameters####################################
+#Spectrum analyser parameters####################################
 fcenter=0.5*(f1+f0)  #center frequency
 fspan=f1-f0     #span
 RBW=1e6         #Filter width
 VBW=1e6         #Video filter width
-SWP=40          #Sweep time
 SwpPt=Nf        #Number of frequencies
-Tmes=1          #Dwell time
-
-###############################################
+Tmes=5          #Dwell time##############################################
 ###### Instrument init. ##########
 ###############################################
 print '_______________\nInitialisations\n'
@@ -66,12 +63,14 @@ spectrum=FSV30()
 spectrum.reset()
 spectrum.SweepPoint(SwpPt)   #Réglage du nombre de pts
 spectrum.UnitDBM()            #Réglage en de l'unité en dBm
-spectrum.centerFreq(fcenter)
-spectrum.SPAN(fspan)
+#spectrum.centerFreq(fcenter)
+#spectrum.SPAN(fspan)
+spectrum.startFreq(int(f0))
+spectrum.stopFreq(int(f1))
 spectrum.RBW(RBW)
 
-peaksindx=[66,122]    #list of indexes of the center frequencies of every channel
-criterion=-55         #stop criterion: value in dBm of the value that states that an emmission is measured.
+#peaksindx=[66,122]    #list of indexes of the center frequencies of every channel
+criterion=-50         #stop criterion: value in dBm of the value that states that an emmission is measured.
 
 
 ####################################################
@@ -81,28 +80,29 @@ PowMeas=zeros(len(Angles)) #Pow measured matrix
 Measurement=zeros((N,2))
 SauvTrace=zeros((N,SwpPt))
 for i in range(0,len(Angles)): #boucle sur les positions du brasseur
-    brasseur.setPosition(int(Angles[i]))
+    stirrer.setPosition(int(Angles[i]))
     time.sleep(3)
     spectrum.readwrite()
     spectrum.MaxHold()
     time.sleep(Tmes)
     Level = spectrum.getTrace(SwpPt)    #Aquisition du signal mesuré
-    while (min(Level[peaksindx])<criterion):
+    #while (min(Level[peaksindx])<criterion):
+    while (max(Level)<criterion):
         Level = spectrum.getTrace(SwpPt)
         time.sleep(Tmes)
-    Level = Spectre.getTrace(SwpPt)
+    Level = spectrum.getTrace(SwpPt)
     MaxLevel=max(Level)           #Recherche du maximum
     MaxIdx =Level.argmax()             #Recherche de l'index du max
     MaxFreq=f[MaxIdx]  #Recherche de la frequence du max
-    Measurement[i,:]=array([MaxFreq,MaxLevel)#Matrice de sauvegarde des données
+    Measurement[i,:]=array([MaxFreq,MaxLevel])#Matrice de sauvegarde des données
     SauvTrace[i,:]= Level
     Powtotal=(V*16*pi**2/(3e8/f)**3*(10**(SauvTrace[0:i,:]/10)/1000).mean(axis=0)/Q)
     print 'N = %3d, f = %2.2f MHz, Pmeas= %2.2f dBm, total power radiated = %2.2f mW/MHz' %(i+1,MaxFreq/1e6,MaxLevel,1000*Powtotal.max())
 
 #Post-treatment
 PowMaxAvg=(10**(SauvTrace/10)/1000).mean(axis=0)
-Pt=(V*16*pi**2/(3e8/Frequence)**3*PowMaxAvg/Q)
-savez(name+".npz",Angles=Angles,f=f,Measure=Measure,SauvTrace=SauvTrace,Q=Q,Pt=Pt)
+Pt=(V*16*pi**2/(3e8/f)**3*PowMaxAvg/Q)
+savez(name+".npz",Angles=Angles,f=f,Measurement=Measurement,SauvTrace=SauvTrace,Q=Q,Pt=Pt)
 
 ioff()
 plot(f/1e6,Pt)
@@ -111,5 +111,5 @@ xlabel("f/MHz")
 ylabel("P/W")
 title("Total radiated power")
 savefig(name+".pdf",bbox_inches="tight")
-savefig(name+".png",bbox_inches="tight")
+#savefig(name+".png",bbox_inches="tight")
 close()
