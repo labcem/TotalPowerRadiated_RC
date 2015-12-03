@@ -17,4 +17,4 @@ Needed:
 
 `Calibration.py` performs the calibration of the reverberation chamber.
 
-`TotalRadiatedPower` performs the measurement.
+`TotalRadiatedPower.py` performs the measurement.
